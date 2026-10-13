@@ -1,6 +1,6 @@
 {
   "name": "onehot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Build with OneHot: a probability for each outcome of a question. The skill and the MCP tools in one install.",
   "author": {
     "name": "Sqwish",

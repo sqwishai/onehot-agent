@@ -23,7 +23,7 @@ MCP server is connected, its tools do the same jobs: `decide`, `estimate_decide`
 `list_families`, `get_family`, `switch_family`, `keep_family_warm`, `roll_back_family`,
 `delete_family`, `list_models`, `get_model`, `model_ready`, `switch_model`,
 `keep_model_warm` and `delete_model`.
-Setup is at https://docs.sqwish.ai/agent-skills.
+Setup is in the Agents guide, https://docs.sqwish.ai/agent-skills.
 
 Every resource reads one item with `get`. Most list calls return one page, newest first;
 pass `limit` and the page's `next_cursor` as `cursor` for the next. To go through all of
