@@ -3,7 +3,6 @@
   "description": "Sqwish's plugins for coding agents.",
   "owner": {
     "name": "Sqwish",
-    "email": "help@sqwish.ai",
     "url": "https://sqwish.ai"
   },
   "plugins": [

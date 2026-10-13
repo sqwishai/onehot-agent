@@ -134,6 +134,5 @@ With the `skills` installer, run `npx skills update onehot`.
 - Docs: [docs.sqwish.ai](https://docs.sqwish.ai)
 - The API's contract: [openapi.json](https://api.sqwish.ai/openapi.json) and the short guide,
   [llms.txt](https://api.sqwish.ai/llms.txt)
-- Support: help@sqwish.ai. Security reports: security@sqwish.ai
 
 Apache 2.0. See [LICENSE](LICENSE).
