@@ -60,6 +60,51 @@ npx skills add sqwishai/onehot-agent --skill onehot
 Add `-g` to install it for every project. That installs the skill only. Connect the MCP
 server with the steps for your agent on the [Agents page](https://docs.sqwish.ai/agent-skills).
 
+## Or ask your agent to install it
+
+Paste this into your agent:
+
+```text
+Install the OneHot skill from https://github.com/sqwishai/onehot-agent. In Claude Code, run
+`claude plugin install onehot --marketplace sqwishai/onehot-agent`. In any other agent, run
+`npx skills add sqwishai/onehot-agent --skill onehot`, then connect the MCP server at
+https://api.sqwish.ai/mcp with the header `Authorization: Bearer ${SQWISH_API_KEY}`, as
+https://docs.sqwish.ai/agent-skills shows for this agent. Use only one of the two. If neither
+works here, read https://github.com/sqwishai/onehot-agent/blob/main/skills/onehot/SKILL.md
+and follow it.
+```
+
+Install it one way only, so your agent doesn't load two copies of the skill. If you added
+OneHot's MCP server by hand before, remove it (`claude mcp remove onehot`), or the agent sees
+every tool twice.
+
+## Try it
+
+Say "using the OneHot skill" in a prompt so any agent loads it. In Claude Code you can also
+run `/onehot:onehot`.
+
+- **Find fragile code.** "Using the OneHot skill, find where this project classifies text with
+  string matching, regular expressions or by parsing a language model's reply, and propose
+  OneHot decisions to replace them."
+- **Build a feature.** "Using the OneHot skill, route incoming support tickets to billing,
+  technical or other, and send a ticket to a person when no team gets at least 0.6."
+- **Tune the wording.** "Using the OneHot skill, lint my decisions, then try them on the
+  labelled examples in `tickets.jsonl` and tell me which wording and threshold work best."
+- **Train your own model.** "Using the OneHot skill, quote a fine-tune on `tickets.jsonl`,
+  start it if it costs under $5, and report the gate as it is."
+
+## Common problems
+
+- **The agent doesn't use the skill.** Run `/onehot:onehot`, or say "using the OneHot skill".
+  Check that `/plugin` lists `onehot` as enabled, then restart the agent.
+- **`/mcp` says `onehot` failed.** Start the agent from a shell where `SQWISH_API_KEY` is set.
+  `invalid_api_key` means the key is wrong or revoked: make a new one in the console.
+- **The agent invents request or response fields.** The skill is out of date. Update it, as
+  below, and try again.
+- **Answers don't match what you expect.** Describe each outcome more precisely, give a way
+  out such as "other", and pick thresholds on examples whose answers you know. The linter
+  flags the common mistakes.
+
 ## Keep it up to date
 
 The skill follows OneHot's API. An old copy can lead your agent to send fields the API no
