@@ -1,0 +1,14 @@
+{
+  "name": "onehot",
+  "version": "0.1.0",
+  "description": "Build with OneHot: a probability for each outcome of a question. The skill and the MCP tools in one install.",
+  "author": {
+    "name": "Sqwish",
+    "email": "help@sqwish.ai",
+    "url": "https://sqwish.ai"
+  },
+  "homepage": "https://docs.sqwish.ai/agent-skills",
+  "repository": "https://github.com/sqwishai/onehot-agent",
+  "license": "Apache-2.0",
+  "keywords": ["onehot", "sqwish", "decisions", "classification", "probabilities", "mcp"]
+}

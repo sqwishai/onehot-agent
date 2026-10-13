@@ -1,0 +1,16 @@
+{
+  "name": "sqwish",
+  "description": "Sqwish's plugins for coding agents.",
+  "owner": {
+    "name": "Sqwish",
+    "email": "help@sqwish.ai",
+    "url": "https://sqwish.ai"
+  },
+  "plugins": [
+    {
+      "name": "onehot",
+      "source": "./",
+      "description": "Build with OneHot: a probability for each outcome of a question. The skill and the MCP tools in one install."
+    }
+  ]
+}

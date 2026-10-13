@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "onehot": {
+      "type": "http",
+      "url": "${SQWISH_BASE_URL:-https://api.sqwish.ai}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${SQWISH_API_KEY}"
+      }
+    }
+  }
+}
