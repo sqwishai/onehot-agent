@@ -60,16 +60,24 @@ npx skills add sqwishai/onehot-agent --skill onehot
 Add `-g` to install it for every project. That installs the skill only. Connect the MCP
 server with the steps for your agent on the [Agents page](https://docs.sqwish.ai/agent-skills).
 
-## Updates
+## Keep it up to date
 
-Claude Code updates a plugin from a third-party marketplace only when you ask:
+The skill follows OneHot's API. An old copy can lead your agent to send fields the API no
+longer takes, or miss new ones. Claude Code leaves auto-update off for marketplaces that
+Anthropic doesn't run, so turn it on once:
+
+1. Type `/plugin` in Claude Code.
+2. Open **Marketplaces** and choose **sqwish**.
+3. Choose **Enable auto-update**.
+
+Claude Code then checks for a new version during each session, installs it, and tells you
+to run `/reload-plugins` to use it. To update by hand instead:
 
 ```sh
 claude plugin update onehot@sqwish
 ```
 
-or turn on auto-update in `/plugin`, under Marketplaces. With the `skills` installer, run
-`npx skills update onehot`.
+With the `skills` installer, run `npx skills update onehot`.
 
 ## Another server
 
