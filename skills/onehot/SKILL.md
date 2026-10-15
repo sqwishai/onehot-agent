@@ -11,11 +11,10 @@ context. The server's `/openapi.json` is the contract and `/llms.txt` is a short
 Do not invent fields.
 
 Install the Python client with `pip install sqwishai`. Then `from sqwishai import OneHot`
-and connect with
-`OneHot(os.environ["SQWISH_BASE_URL"], api_key=os.environ["SQWISH_API_KEY"])`
-(`AsyncOneHot` has the same methods). Install the TypeScript client with
-`npm install sqwishai` and `import { OneHot } from "sqwishai"`; it reads the same
-`SQWISH_BASE_URL` and `SQWISH_API_KEY`. If the OneHot
+and connect with `OneHot()`, which reads `SQWISH_API_KEY`, and `SQWISH_BASE_URL` when it is
+set (`AsyncOneHot` has the same methods). Install the TypeScript client with
+`npm install sqwishai` and `import { OneHot } from "sqwishai"`; `new OneHot()` reads the same
+variables. If the OneHot
 MCP server is connected, its tools do the same jobs: `decide`, `estimate_decide`,
 `lint_decision`, `list_recipes`, `create_dataset`, `add_dataset_rows`,
 `list_dataset_versions`, `start_prompt_tuning`, `get_prompt_tuning`, `start_fine_tune`,
@@ -56,8 +55,6 @@ team = answer["decisions"]["team"]  # probabilities, top, p_top; policy.action: 
   `ece` on its held-out rows), so pick thresholds on your own labelled data.
 - `GET /v1/models` (or `list_models`) shows which models this server runs. `list_recipes`
   has complete requests for common jobs.
-- `POST /v1/playground/decide` serves the console's playground only, behind Cloudflare's
-  browser check, so an agent calls `/v1/decide` with a key instead.
 - A version that hasn't been used for a while may still be loading. With
   `fallback="none"` that is a 503 `model_warming` error with `Retry-After: 5` that charged
   nothing; its idempotency key keeps the failure, so send the call again after 5 seconds with a
