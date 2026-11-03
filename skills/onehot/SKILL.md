@@ -1,6 +1,6 @@
 ---
 name: onehot
-description: Use OneHot from code or through its MCP tools. Run decisions (a probability for each allowed outcome of a question) with POST /v1/decide, check questions with the linter, tune a decision's wording on labelled rows, train families of models on datasets that grow in versions, read the gate, and switch, keep warm or roll back families and models. Use for OneHot API, SDK and MCP work, not for general text generation or training on other platforms.
+description: Use OneHot from code or through its MCP tools. Run decisions about text or images (a probability for each allowed outcome of a question) with POST /v1/decide, check questions with the linter, tune a decision's wording on labelled rows, train families of models on datasets that grow in versions, read the gate, and switch, keep warm or roll back families and models. Use for OneHot API, SDK and MCP work, not for general text generation or training on other platforms.
 ---
 
 # OneHot
@@ -17,8 +17,8 @@ set (`AsyncOneHot` has the same methods). Install the TypeScript client with
 variables. If the OneHot
 MCP server is connected, its tools do the same jobs: `decide`, `estimate_decide`,
 `lint_decision`, `list_recipes`, `create_dataset`, `add_dataset_rows`,
-`list_dataset_versions`, `start_prompt_tuning`, `get_prompt_tuning`, `start_fine_tune`,
-`estimate_fine_tune`, `continue_family`, `estimate_continue`, `get_fine_tune`,
+`list_dataset_versions`, `start_prompt_tuning`, `get_prompt_tuning`, `create_family`,
+`estimate_family`, `continue_family`, `estimate_continue`, `get_fine_tune`,
 `list_families`, `get_family`, `switch_family`, `keep_family_warm`, `roll_back_family`,
 `delete_family`, `list_models`, `get_model`, `model_ready`, `switch_model`,
 `keep_model_warm` and `delete_model`.
@@ -64,15 +64,29 @@ team = answer["decisions"]["team"]  # probabilities, top, p_top; policy.action: 
   OneHot key and model id. Write new code against `decide`, and do not copy Jev's
   `confidence` into it. `/llms.txt` shows both shapes side by side.
 
+## Send images
+
+`kettei-fat` and `kettei-chub` read pictures; core reads text only, and a call that names no model
+runs core. Call `client.decide` with `model="kettei-chub"` and
+`images=[{"id": 1, "media_type": "image/jpeg", "data": <base64 of the file, no line breaks>}]`.
+Write `<image:1>` where the picture belongs in `context`, which must be a string.
+
+- The model reads at most 2,097,152 pixels of a picture (width times height). One with more only
+  uploads slower, so shrink each to fit, keeping its shape. Send a photo as JPEG at quality 90 and a
+  screenshot or a scan as PNG. A file over 20 MiB or 64 megapixels is refused,
+  and so is a request over 48 MiB.
+- Send pictures from code, never as base64 in `context` or through the MCP `decide` tool.
+- Ask the related questions about a picture in one request, so it uploads once.
+
 ## Tune the wording before you train
 
 With 50 to 1,000 training rows asking a decision, and 5 or more for each outcome, prompt
 tuning rewrites the question, outcome descriptions and rubric, then tests the result once on
-rows it never saw. Outcome ids never change. It tunes for a base model, or for a fine-tuned
-model while it answers calls (`model="router@3"`).
+rows it never saw. Outcome ids never change. It tunes for a base model only, core unless
+`model` names another; a family or a model by its number is refused with `base_model_only`.
 
 ```python
-data = client.datasets.upload("tickets.jsonl", idempotency_key="tickets-v1")
+data = client.datasets.create("Tickets", "tickets.jsonl", idempotency_key="tickets-v1")
 job = client.prompt_tuning.create(data["id"], decision="team", idempotency_key="tune-team")
 job = client.prompt_tuning.wait(job["id"], timeout=3600)  # raises JobFailed if it fails
 result = job["result"]
@@ -92,11 +106,12 @@ automatically; call `prompt_tuning.get` to see whether the job stopped.
 Each example is a decide request without `model`, plus `targets` (a probability for every
 outcome, summing to 1) or `rewards` (a reward for every outcome, never a single logged
 reward). A family starts on 100 to 10,000 training rows, and its gate needs 30 held-out decisions
-to judge, so give it enough rows: about a fifth of the contexts are held out.
+to judge, so give it enough rows: about a fifth of the contexts are held out. To choose the
+held-out rows yourself, pass `training=` and `evaluation=` instead of the one file.
 
 ```python
-data = client.datasets.upload("tickets.jsonl", idempotency_key="tickets-v1")
-job = client.fine_tuning.create(data["id"], family="router", idempotency_key="router-v1")
+data = client.datasets.create("Tickets", "tickets.jsonl", idempotency_key="tickets-v1")
+job = client.families.create("router", data["id"], idempotency_key="router-v1")
 job = client.fine_tuning.wait(job["id"], timeout=6 * 3600)  # raises JobFailed on failure
 ```
 
@@ -115,24 +130,25 @@ decisions about contexts that model's line didn't train on count toward the 30. 
 Add the new rows to the family's dataset as its next version, then continue the family:
 
 ```python
-client.datasets.add_rows(data["id"], new_rows, family="router", idempotency_key="tickets-v2")
-# or client.datasets.upload_rows(data["id"], "more.csv", family="router") for JSONL or CSV
-job = client.fine_tuning.continue_family("router", idempotency_key="router-next")
+client.datasets.add_rows(data["id"], new_rows, idempotency_key="tickets-v2")  # a list, or a JSONL file's path
+job = client.families.continue_("router", idempotency_key="router-next")
 job = client.fine_tuning.wait(job["id"], timeout=6 * 3600)
 ```
 
 The rows must ask the dataset's own decisions, worded the same way, or they get
 `task_mismatch`: a different task needs a new dataset and a new family. A context the dataset
-holds keeps its side of the split, so evaluation rows never enter training.
-`client.datasets.versions(data["id"])` lists the versions, and `download(data["id"], version=1)`
-returns one as JSONL.
+holds keeps its side of the split, so evaluation rows never enter training. We hold out 20% of
+the new contexts for evaluation, whatever share the dataset was made with; pass
+`evaluation_fraction` for another share.
+`client.datasets.versions(data["id"])` lists the versions, and
+`download(data["id"], "training", version=1)` returns one side of one as JSONL.
 
 It trains from the family's latest model on the rows added since the family last trained,
 with as many earlier rows mixed in to reduce forgetting. Without new rows it gets
 `no_new_data`, and with fewer than 30 new held-out decisions `not_enough_evaluation_data`.
 
 It trains on the dataset's newest version. To train on an earlier one, name it:
-`client.fine_tuning.continue_family("router", dataset_version=2)`, or `dataset_version` on the
+`client.families.continue_("router", dataset_version=2)`, or `dataset_version` on the
 `continue_family` tool. The rows added after it stay new for the next model. It must be newer
 than the version the family's last finished job trained on, or it gets `no_new_data`.
 
@@ -181,9 +197,10 @@ nor answering, such as router@1 while router serves router@3. Confirm both with 
 Errors are `{"error": {code, message, retryable, request_id, details}}`. Retry only when
 `retryable` is true. On a 422, fix the fields in `details` rather than resending the same
 body. Reuse the same `idempotency_key` when you retry a decision or creating a dataset or job,
-and use a new one for a new run. If you passed none, the error names the key the call sent
-(`idempotency_key` on the SDK's `APIError`, on its `TimeoutError` or httpx error when a call
-got no answer, and in a tool's error): send that one, because a retry without it is a second
-operation and may be charged as well. A job that is still running after a wait timed out is
+and use a new one for a new run; an organisation with zero data retention keeps no decision's
+answer, so there a retried decision runs and is charged again. If you passed none, the error
+names the key the call sent (`idempotency_key` on the SDK's `APIError`, on its `TimeoutError`
+or httpx error when a call got no answer, and in a tool's error): send that one, because a retry
+without it is a second operation and may be charged as well. A job that is still running after a wait timed out is
 still running; poll it with `fine_tuning.get` or `prompt_tuning.get`. Do not claim a trained
 model, a tuned wording, a gate result or a latency figure unless the job or response shows it.
